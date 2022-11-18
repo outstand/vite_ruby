@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'dry-cli', '~> 0.7.0'
   s.add_dependency 'rack-proxy', '~> 0.6', '>= 0.6.1'
   s.add_dependency 'zeitwerk', '~> 2.2'
+  s.add_dependency 'excon', '~> 0.92'
 
   s.add_development_dependency 'm', '~> 1.5'
   s.add_development_dependency 'minitest', '~> 5.0'

@@ -3,7 +3,7 @@
 require 'logger'
 require 'forwardable'
 require 'pathname'
-require 'socket'
+require 'excon'
 
 require 'zeitwerk'
 loader = Zeitwerk::Loader.for_gem
@@ -87,10 +87,11 @@ class ViteRuby
     return false unless run_proxy?
     return true if defined?(@running_at) && @running_at && Time.now - @running_at < 1
 
-    Socket.tcp(config.host, config.port, connect_timeout: config.dev_server_connect_timeout).close
+    http_check!
+
     @running_at = Time.now
     true
-  rescue StandardError
+  rescue Excon::Error::HTTPStatus, Excon::Error::Socket, Excon::Error::Timeout => e
     @running_at = false
   end
 
@@ -138,6 +139,31 @@ class ViteRuby
   # Public: Enables looking up assets managed by Vite using name and type.
   def manifest
     @manifest ||= ViteRuby::Manifest.new(self)
+  end
+
+  def http_uri
+    return @http_uri if defined?(@http_uri)
+
+    @http_uri = URI::HTTPS.build(
+      host: config.host,
+      port: config.port,
+      path: "/#{config.public_output_dir}"
+    )
+  end
+
+  def http_check!
+    Excon.get(
+      http_uri.to_s,
+      headers: {
+        "Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Encoding" => "gzip, deflate, br",
+        "Cache-Control" => "no-cache"
+      },
+      expects: [200, 404],
+      connect_timeout: config.dev_server_connect_timeout,
+      tcp_nodelay: true,
+      persistent: false
+    )
   end
 end
 
