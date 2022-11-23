@@ -6,7 +6,8 @@ module ViteRails::TagHelpers
   def vite_client_tag
     return unless src = vite_manifest.vite_client_src
 
-    javascript_include_tag(src, type: 'module', extname: false)
+    options = ViteRuby.config.vite_client_tag_options
+    javascript_include_tag(src, options.with_defaults(type: 'module', extname: false))
   end
 
   # Public: Renders a script tag to enable HMR with React Refresh.
@@ -39,6 +40,7 @@ module ViteRails::TagHelpers
                           crossorigin: 'anonymous',
                           media: 'screen',
                           **options)
+    options = options.with_defaults(ViteRuby.config.javascript_tag_options)
     entries = vite_manifest.resolve_entries(*names, type: asset_type)
     tags = javascript_include_tag(*entries.fetch(:scripts), crossorigin: crossorigin, type: type, extname: false, **options)
     tags << vite_preload_tag(*entries.fetch(:imports), crossorigin: crossorigin, **options) unless skip_preload_tags
@@ -57,6 +59,8 @@ module ViteRails::TagHelpers
 
   # Public: Renders a <link> tag for the specified Vite entrypoints.
   def vite_stylesheet_tag(*names, **options)
+    options = options.with_defaults(ViteRuby.config.stylesheet_tag_options)
+
     style_paths = names.map { |name| vite_asset_path(name, type: :stylesheet) }
 
     options[:extname] = false if Rails::VERSION::MAJOR >= 7
@@ -66,6 +70,8 @@ module ViteRails::TagHelpers
 
   # Public: Renders an <img> tag for the specified Vite asset.
   def vite_image_tag(name, **options)
+    options = options.with_defaults(ViteRuby.config.image_tag_options)
+
     if options[:srcset] && !options[:srcset].is_a?(String)
       options[:srcset] = options[:srcset].map do |src_name, size|
         "#{ vite_asset_path(src_name) } #{ size }"
