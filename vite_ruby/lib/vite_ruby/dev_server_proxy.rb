@@ -15,7 +15,7 @@ class ViteRuby::DevServerProxy < Rack::Proxy
 
   # Rack: Intercept asset requests and send them to the Vite server.
   def perform_request(env)
-    if vite_should_handle?(env) && dev_server_running?
+    if vite_should_handle?(env)
       forward_to_vite_dev_server(env)
       super(env)
     else
